@@ -87,13 +87,21 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 			const { parsedClaims, parsedHeaders, parsedPayload, err } = await (async () => {
 				try {
 					const parsedSdJwt = await SDJwt.fromEncode(rawCredential, hasherAndAlgorithm.hasher);
+					console.log("parsed SdJwt");
+					console.log(parsedSdJwt);
 					const claims = await parsedSdJwt.getClaims(hasherAndAlgorithm.hasher);
+					console.log("claims");
+					console.log(claims);
 					const headers = await parsedSdJwt.jwt?.header;
+					console.log("headers");
+					console.log(headers);
 					const payload = await parsedSdJwt.jwt?.payload;
-
+					console.log("payload");
+					console.log(payload);
 					return { parsedClaims: claims as Record<string, unknown>, parsedHeaders: headers, parsedPayload: payload, err: null };
 				}
 				catch (err) {
+					console.log(err);
 					return { parsedClaims: null, parsedHeaders: null, err: err };
 				}
 
