@@ -3,6 +3,7 @@ export * from './rendering';
 export * from './ParsingEngine';
 export * from './credential-parsers/SDJWTVCParser';
 export * from './credential-parsers/MsoMdocParser';
+export * from './credential-parsers/JWTVCParser';
 
 export * from './VerifyingEngine';
 export * from './credential-verifiers/SDJWTVCVerifier';
