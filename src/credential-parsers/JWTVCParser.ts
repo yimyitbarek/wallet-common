@@ -29,6 +29,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 
   return {
     async parse({ rawCredential, credentialIssuer }) {
+			console.log("JWTV parsing started")
       if (typeof rawCredential !== 'string') {
         return { success: false, error: CredentialParsingError.InvalidDatatype };
       }
@@ -44,10 +45,14 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
         
         parsedHeaders = JSON.parse(atob(parts[0]));
         parsedPayload = JSON.parse(atob(parts[1]));
+
+				console.log("parts");
+				console.log(parts);
       } catch (err) {
         return { success: false, error: CredentialParsingError.CouldNotParse };
       }
-
+			console.log("parsed headers");
+			console.log(parsedHeaders);
       // 2. Format Validation
       // Here we strictly check for jwt_vc_json
       if (parsedHeaders.typ !== "jwt_vc_json") {
