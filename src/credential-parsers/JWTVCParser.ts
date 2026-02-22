@@ -12,7 +12,7 @@ import { CredentialRenderingService } from "../rendering";
 import { getIssuerMetadata } from "../utils/getIssuerMetadata";
 import { matchDisplayByLocale } from '../utils/matchLocalizedDisplay';
 import { OpenID4VCICredentialRendering } from "../functions/openID4VCICredentialRendering";
-import { z } from 'zol';
+import { z } from 'zod';
 
 export function JWTVCParser(args: { context: Context, httpClient: HttpClient }): CredentialParser {
   
