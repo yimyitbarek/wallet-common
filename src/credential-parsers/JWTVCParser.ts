@@ -158,14 +158,22 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			};
 			console.log("display claims");
 			console.log(normalizedClaims);
+			// 1. Force the ID right here
+			const forceConfigId = "urn:eudi:pid:1:dc";
+
 			return {
 				success: true,
 				value: {
 					signedClaims: normalizedClaims,
 					metadata: {
 						credential: {
-							format: parsedHeaders.typ as any, 
-							vct: parsedPayload.vct || effectiveConfigId,
+							// This is the specific field the Wallet usually maps to 'credentialConfigurationId'
+							format: parsedHeaders.typ as any,
+							vct: parsedPayload.vct || forceConfigId, 
+							
+							// ADD THIS LINE: Explicitly tell the system what configuration this is
+							credentialConfigurationId: forceConfigId, 
+							
 							TypeMetadata: { claims: [] },
 							image: { dataUri },
 							name: credentialFriendlyName,
