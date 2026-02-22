@@ -55,9 +55,14 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			console.log(parsedHeaders);
       // 2. Format Validation
       // Here we strictly check for jwt_vc_json
-      if (parsedHeaders.typ !== "jwt_vc_json") {
-        return { success: false, error: CredentialParsingError.NotSupportedCredentialType };
-      }
+			const supportedTypes = ["vc+jwt", "jwt_vc_json"];
+
+			if (!supportedTypes.includes(parsedHeaders.typ)) {
+				return { 
+					success: false, 
+					error: CredentialParsingError.NotSupportedCredentialType 
+				};
+			}
 			console.log("parsedPayload issuer");
 			console.log(parsedPayload.iss);
 
@@ -93,8 +98,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
           metadata: {
             credential: {
               // We cast this to the specific format expected by your library's types
-              format: "jwt_vc_json" as any, 
-              vct: parsedPayload.vct || "",
+              format: parsedHeaders.typ as any, 
+              vct: parsedPayload.vct || parsedPayload.vc?.type?.[0] || "",
               TypeMetadata: { claims: [] }, // JWT VC usually uses issuer metadata for claims
               image: { dataUri },
               name: credentialFriendlyName,
