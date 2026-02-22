@@ -138,30 +138,33 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				return finalFallback;
 			};
 
-			// 1. Extract the internal claims (W3C standard)
-			const credentialSubject = parsedPayload.vc?.credentialSubject || {};
+			// 1. Target the internal claims
+			const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || {}) as any;
 
-			// 2. Create a normalized object for the UI/Renderer
-			// This flattens the data and maps 'portrait' to 'picture'
+			// 2. Normalize: Ensure 'picture' exists for the UI
+			// We look for 'picture' first, then 'portrait', then 'photo' inside the subject
+			const pictureValue = parsedPayload.picture || 
+													credentialSubject.picture || 
+													credentialSubject.portrait || 
+													credentialSubject.photo || 
+													null;
+
 			const normalizedClaims = {
 				...parsedPayload,
 				...credentialSubject,
-				picture: parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null
+				picture: pictureValue
 			};
 
 			return {
 				success: true,
 				value: {
-					// Use normalizedClaims so the UI finds the 'picture' field at the top level
-					signedClaims: normalizedClaims, 
+					signedClaims: normalizedClaims,
 					metadata: {
 						credential: {
 							format: parsedHeaders.typ as any, 
 							vct: parsedPayload.vct || parsedPayload.vc?.type?.[0] || "",
-							TypeMetadata: { claims: [] }, 
-							image: { 
-								dataUri 
-							},
+							TypeMetadata: { claims: [] },
+							image: { dataUri },
 							name: credentialFriendlyName,
 						},
 						issuer: {
