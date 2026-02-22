@@ -110,10 +110,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 							sdJwtVcMetadataClaims: undefined,
 							filter,
 						}).catch(() => null);
-						
-						if (rendered) {
-							console.log("rendered here Svg Template Uri 1");
-							return rendered;}
+						console.log("rendered here Svg Template Uri 1");						
+						if (rendered) return rendered;
 					}
 				}
 			
@@ -127,10 +125,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 							...(simpleDisplayConfig ?? {}) 
 						},
 					}).catch(() => null);
-					
-					if (rendered) {
-						console.log("rendered here credential Display Localized");
-						return rendered};
+					console.log("rendered here credential Display Localized");					
+					if (rendered) return rendered;
 				}
 				const normalizedClaims2 = {
 					...parsedPayload,     // Keep top-level JWT claims (iss, sub, iat, exp)
@@ -140,7 +136,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				// STEP 3: Generic Card (Fallback 2)
 				const finalFallback = await renderer.renderCustomSvgTemplate({
 					signedClaims: normalizedClaims2,
-					displayConfig: { name: "Verifiable Credential" },
+					displayConfig: { name: "Verifiable" },
 				}).catch(() => null);
 			
 				return finalFallback;
