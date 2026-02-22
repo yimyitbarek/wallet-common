@@ -111,7 +111,9 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 							filter,
 						}).catch(() => null);
 						
-						if (rendered) return rendered;
+						if (rendered) {
+							console.log("rendered here Svg Template Uri 1");
+							return rendered;}
 					}
 				}
 			
@@ -126,12 +128,18 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 						},
 					}).catch(() => null);
 					
-					if (rendered) return rendered;
+					if (rendered) {
+						console.log("rendered here credential Display Localized");
+						return rendered};
 				}
-			
+				const normalizedClaims2 = {
+					...parsedPayload,     // Keep top-level JWT claims (iss, sub, iat, exp)
+					...credentialSubject, // This pulls every field from credentialSubject up to the root
+					picture: pictureValue // Ensures the UI 'picture' key is populated
+				};
 				// STEP 3: Generic Card (Fallback 2)
 				const finalFallback = await renderer.renderCustomSvgTemplate({
-					signedClaims: parsedPayload,
+					signedClaims: normalizedClaims2,
 					displayConfig: { name: "Verifiable Credential" },
 				}).catch(() => null);
 			
@@ -160,6 +168,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			delete normalizedClaims.credentialSubject;
 			// 1. Force the ID right here
 			const forceConfigId = "urn:eudi:pid:1:dc";
+
+
 
 			return {
 				success: true,
