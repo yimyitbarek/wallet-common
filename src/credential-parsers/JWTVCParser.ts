@@ -138,28 +138,41 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				return finalFallback;
 			};
 
-      return {
-        success: true,
-        value: {
-          signedClaims: parsedPayload,
-          metadata: {
-            credential: {
-              // We cast this to the specific format expected by your library's types
-              format: parsedHeaders.typ as any, 
-              vct: parsedPayload.vct || parsedPayload.vc?.type?.[0] || "",
-              TypeMetadata: { claims: [] }, // JWT VC usually uses issuer metadata for claims
-              image: { dataUri },
-              name: credentialFriendlyName,
-            },
-            issuer: {
-              id: parsedPayload.iss,
-              name: parsedPayload.iss,
-            }
-          },
-          validityInfo: extractValidityInfo(parsedPayload),
-          warnings
-        }
-      };
+			// 1. Extract the internal claims (W3C standard)
+			const credentialSubject = parsedPayload.vc?.credentialSubject || {};
+
+			// 2. Create a normalized object for the UI/Renderer
+			// This flattens the data and maps 'portrait' to 'picture'
+			const normalizedClaims = {
+				...parsedPayload,
+				...credentialSubject,
+				picture: parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null
+			};
+
+			return {
+				success: true,
+				value: {
+					// Use normalizedClaims so the UI finds the 'picture' field at the top level
+					signedClaims: normalizedClaims, 
+					metadata: {
+						credential: {
+							format: parsedHeaders.typ as any, 
+							vct: parsedPayload.vct || parsedPayload.vc?.type?.[0] || "",
+							TypeMetadata: { claims: [] }, 
+							image: { 
+								dataUri 
+							},
+							name: credentialFriendlyName,
+						},
+						issuer: {
+							id: parsedPayload.iss,
+							name: parsedPayload.iss,
+						}
+					},
+					validityInfo: extractValidityInfo(parsedPayload),
+					warnings
+				}
+			};
     },
   };
 }
