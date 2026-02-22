@@ -86,47 +86,56 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				preferredLangs: string[] = ['en-US']
 			): Promise<string | null> => {
 			
-				// 1. Get the display configuration for the specific credential
+				// 1. Match the localized display from issuer metadata
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
 				
-				const svgTemplateUri = credentialDisplayLocalized?.rendering?.svg_templates?.[0]?.uri || null;
-				const simpleDisplayConfig = credentialDisplayLocalized?.rendering?.simple || null;
+				// Cast to 'any' to bypass the "Property 'rendering' does not exist" error
+				const displayMetadata = credentialDisplayLocalized as any;
+				
+				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
+				const simpleDisplayConfig = displayMetadata?.rendering?.simple || null;
 			
-				// STEP 1: Try SVG template rendering (High quality)
+				// STEP 1: SVG Template Rendering (High Priority)
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
 					if (svgResponse && svgResponse.status === 200) {
 						const svgdata = svgResponse.data as string;
+						
+						// For vc+jwt, the SVG often expects the internal credentialSubject claims
+						const renderContext = parsedPayload.vc?.credentialSubject || parsedPayload;
+			
 						const rendered = await cr.renderSvgTemplate({
-							json: parsedPayload, // Use the decoded JWT payload
+							json: renderContext,
 							credentialImageSvgTemplate: svgdata,
-							// For JWT-VC, we often don't have SD-JWT style claim metadata, so we pass undefined or the issuer's claim info
-							sdJwtVcMetadataClaims: undefined, 
+							sdJwtVcMetadataClaims: undefined,
 							filter,
 						}).catch(() => null);
+						
 						if (rendered) return rendered;
 					}
 				}
 			
-				// STEP 2: Fallback to Simple Rendering (The logic you currently have)
+				// STEP 2: Custom SVG Rendering (Fallback 1)
 				if (credentialDisplayLocalized) {
 					const rendered = await renderer.renderCustomSvgTemplate({
+						// Pass the full payload here as the renderer usually handles its own mapping
 						signedClaims: parsedPayload,
 						displayConfig: { 
 							...credentialDisplayLocalized, 
 							...(simpleDisplayConfig ?? {}) 
 						},
 					}).catch(() => null);
+					
 					if (rendered) return rendered;
 				}
 			
-				// STEP 3: Final Fallback (Generic card)
-				const finalRendered = await renderer.renderCustomSvgTemplate({
+				// STEP 3: Generic Card (Fallback 2)
+				const finalFallback = await renderer.renderCustomSvgTemplate({
 					signedClaims: parsedPayload,
 					displayConfig: { name: "Verifiable Credential" },
 				}).catch(() => null);
 			
-				return finalRendered;
+				return finalFallback;
 			};
 
       return {
