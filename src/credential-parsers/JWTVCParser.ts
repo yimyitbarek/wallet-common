@@ -138,42 +138,40 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				return finalFallback;
 			};
 
-			// 1. Target the internal claims
+			// 1. Identify the source of the nested claims
+			// We look in 'vc.credentialSubject' (W3C standard) or 'credentialSubject'
 			const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || {}) as any;
 
-			// 2. Normalize: Ensure 'picture' exists for the UI
-			// We look for 'picture' first, then 'portrait', then 'photo' inside the subject
+			// 2. Extract the picture specifically to handle the 'portrait' naming issue
 			const pictureValue = parsedPayload.picture || 
 													credentialSubject.picture || 
 													credentialSubject.portrait || 
-													credentialSubject.photo || 
 													null;
-			const effectiveConfigId = credentialIssuer?.credentialConfigurationId || "urn:eudi:pid:1:dc";
 
+			// 3. Construct the flattened 'signedClaims'
 			const normalizedClaims = {
-				...parsedPayload,
-				...credentialSubject,
-				picture: pictureValue,
-				credentialConfigurationId: effectiveConfigId
+				...parsedPayload,     // Keep top-level JWT claims (iss, sub, iat, exp)
+				...credentialSubject, // This pulls every field from credentialSubject up to the root
+				picture: pictureValue // Ensures the UI 'picture' key is populated
 			};
-			console.log("display claims");
-			console.log(normalizedClaims);
+
+			// Clean up: Optional - if you want to remove the redundant nested object
+			delete normalizedClaims.vc;
+			delete normalizedClaims.credentialSubject;
 			// 1. Force the ID right here
 			const forceConfigId = "urn:eudi:pid:1:dc";
 
 			return {
 				success: true,
 				value: {
-					signedClaims: normalizedClaims,
+					// This now contains everything at the top level
+					signedClaims: normalizedClaims, 
 					metadata: {
 						credential: {
-							// This is the specific field the Wallet usually maps to 'credentialConfigurationId'
-							format: parsedHeaders.typ as any,
-							vct: parsedPayload.vct || forceConfigId, 
-							
-							// ADD THIS LINE: Explicitly tell the system what configuration this is
-							credentialConfigurationId: forceConfigId, 
-							
+							format: parsedHeaders.typ as any, 
+							// Force the ID here so it's not empty in your logs/metadata
+							vct: parsedPayload.vct || "urn:eudi:pid:1:dc",
+							credentialConfigurationId: "urn:eudi:pid:1:dc",
 							TypeMetadata: { claims: [] },
 							image: { dataUri },
 							name: credentialFriendlyName,
