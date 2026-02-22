@@ -134,11 +134,18 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					picture: pictureValue // Ensures the UI 'picture' key is populated
 				};
 				// STEP 3: Generic Card (Fallback 2)
+				// Define a default PID look in case metadata is missing
+				const pidDefaultDisplay = {
+					name: "Person Identification Data",
+					logo: { uri: "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_logo.png" }, // Optional: link to a standard logo
+					background_color: "#003399", // EU Blue
+					text_color: "#FFFFFF",
+				};
+
 				const finalFallback = await renderer.renderCustomSvgTemplate({
-					signedClaims: normalizedClaims2,
-					displayConfig: { name: "Verifiable" },
+					signedClaims: normalizedClaims, // Your flattened claims
+					displayConfig: (credentialDisplayLocalized as any) || pidDefaultDisplay,
 				}).catch(() => null);
-			
 				return finalFallback;
 			};
 
