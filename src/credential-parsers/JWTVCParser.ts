@@ -81,17 +81,53 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
         return display?.name || 'Verifiable Credential';
       };
 
-      const dataUri: ImageDataUriCallback = async (filter, preferredLangs = ['en-US']) => {
-        const display = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
-        if (display) {
-          const rendered = await renderer.renderCustomSvgTemplate({
-            signedClaims: parsedPayload,
-            displayConfig: display,
-          }).catch(() => null);
-          if (rendered) return rendered;
-        }
-        return null;
-      };
+			const dataUri: ImageDataUriCallback = async (
+				filter?: Array<CredentialClaimPath>,
+				preferredLangs: string[] = ['en-US']
+			): Promise<string | null> => {
+			
+				// 1. Get the display configuration for the specific credential
+				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
+				
+				const svgTemplateUri = credentialDisplayLocalized?.rendering?.svg_templates?.[0]?.uri || null;
+				const simpleDisplayConfig = credentialDisplayLocalized?.rendering?.simple || null;
+			
+				// STEP 1: Try SVG template rendering (High quality)
+				if (svgTemplateUri) {
+					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
+					if (svgResponse && svgResponse.status === 200) {
+						const svgdata = svgResponse.data as string;
+						const rendered = await cr.renderSvgTemplate({
+							json: parsedPayload, // Use the decoded JWT payload
+							credentialImageSvgTemplate: svgdata,
+							// For JWT-VC, we often don't have SD-JWT style claim metadata, so we pass undefined or the issuer's claim info
+							sdJwtVcMetadataClaims: undefined, 
+							filter,
+						}).catch(() => null);
+						if (rendered) return rendered;
+					}
+				}
+			
+				// STEP 2: Fallback to Simple Rendering (The logic you currently have)
+				if (credentialDisplayLocalized) {
+					const rendered = await renderer.renderCustomSvgTemplate({
+						signedClaims: parsedPayload,
+						displayConfig: { 
+							...credentialDisplayLocalized, 
+							...(simpleDisplayConfig ?? {}) 
+						},
+					}).catch(() => null);
+					if (rendered) return rendered;
+				}
+			
+				// STEP 3: Final Fallback (Generic card)
+				const finalRendered = await renderer.renderCustomSvgTemplate({
+					signedClaims: parsedPayload,
+					displayConfig: { name: "Verifiable Credential" },
+				}).catch(() => null);
+			
+				return finalRendered;
+			};
 
       return {
         success: true,
