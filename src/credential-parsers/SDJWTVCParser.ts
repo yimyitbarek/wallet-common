@@ -72,10 +72,17 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 			const { parsedClaims, parsedHeaders, parsedPayload, err } = await (async () => {
 				try {
 					const parsedSdJwt = await SDJwt.fromEncode(rawCredential, hasherAndAlgorithm.hasher);
+					console.log("Parsed SD JWT");
+					console.log(parsedSdJwt);
 					const claims = await parsedSdJwt.getClaims(hasherAndAlgorithm.hasher);
+					console.log("Claims");
+					console.log(claims);
 					const headers = await parsedSdJwt.jwt?.header;
+					console.log("headers");
+					console.log(headers);
 					const payload = await parsedSdJwt.jwt?.payload;
-
+					console.log("payload");
+					console.log(payload);
 					return { parsedClaims: claims as Record<string, unknown>, parsedHeaders: headers, parsedPayload: payload, err: null };
 				}
 				catch (err) {
@@ -91,7 +98,11 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 			}
 
 			const schema = z.enum([VerifiableCredentialFormat.VC_SDJWT, VerifiableCredentialFormat.DC_SDJWT]);
+			console.log("schema");
+			console.log(schema);
 			const typParseResult = await schema.safeParseAsync(parsedHeaders.typ);
+			console.log("typedResult");
+			console.log(typParseResult);
 			if (typParseResult.error) {
 				return {
 					success: false,
@@ -110,7 +121,8 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 				};
 			}
 
-
+			console.log("validated parsed claims");
+			console.log(validatedParsedClaims);
 			const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, validatedParsedClaims.iss, warnings);
 
 			const getSdJwtMetadataResult = await getSdJwtVcMetadata(args.context, args.httpClient, rawCredential, validatedParsedClaims, warnings);
