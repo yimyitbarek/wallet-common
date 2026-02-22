@@ -97,7 +97,11 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 				};
 			}
 
-			const schema = z.enum([VerifiableCredentialFormat.VC_SDJWT, VerifiableCredentialFormat.DC_SDJWT]);
+			const schema = z.enum([
+				VerifiableCredentialFormat.VC_SDJWT, 
+				VerifiableCredentialFormat.DC_SDJWT,
+				"jwt_vc_json" // Standard JWT VC format
+			]);
 			console.log("schema");
 			console.log(schema);
 			const typParseResult = await schema.safeParseAsync(parsedHeaders.typ);
