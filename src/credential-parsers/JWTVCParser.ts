@@ -143,7 +143,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				};
 
 				const finalFallback = await renderer.renderCustomSvgTemplate({
-					signedClaims: normalizedClaims, // Your flattened claims
+					signedClaims: normalizedClaims2, // Your flattened claims
 					displayConfig: (credentialDisplayLocalized as any) || pidDefaultDisplay,
 				}).catch(() => null);
 				return finalFallback;
