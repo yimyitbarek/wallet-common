@@ -67,11 +67,13 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			console.log(parsedPayload.iss);
 
       // 3. Fetch Metadata
-      const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, parsedPayload.iss, warnings);
+      const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
       
       const credentialIssuerMetadata = credentialIssuer?.credentialConfigurationId
         ? issuerMetadata?.credential_configurations_supported?.[credentialIssuer?.credentialConfigurationId]
         : undefined;
+			console.log("issuer Metadata");
+			console.log(issuerMetadata);
 
       // 4. Setup Display Callbacks
       const credentialFriendlyName: CredentialFriendlyNameCallback = async (preferredLangs = ['en-US']) => {
