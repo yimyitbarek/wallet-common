@@ -154,7 +154,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				...credentialSubject,
 				picture: pictureValue
 			};
-
+			console.log("display claims");
+			console.log(normalizedClaims);
 			return {
 				success: true,
 				value: {
