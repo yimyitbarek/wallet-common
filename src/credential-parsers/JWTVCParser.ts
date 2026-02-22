@@ -55,9 +55,9 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			console.log(parsedHeaders);
       // 2. Format Validation
       // Here we strictly check for jwt_vc_json
-      if (parsedHeaders.typ !== "jwt_vc_json") {
-        return { success: false, error: CredentialParsingError.NotSupportedCredentialType };
-      }
+      //if (parsedHeaders.typ !== "jwt_vc_json") {
+      //  return { success: false, error: CredentialParsingError.NotSupportedCredentialType };
+      //}
 
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, parsedPayload.iss, warnings);
