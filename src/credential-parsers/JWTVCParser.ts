@@ -148,11 +148,13 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 													credentialSubject.portrait || 
 													credentialSubject.photo || 
 													null;
+			const effectiveConfigId = credentialIssuer?.credentialConfigurationId || "urn:eudi:pid:1:dc";
 
 			const normalizedClaims = {
 				...parsedPayload,
 				...credentialSubject,
-				picture: pictureValue
+				picture: pictureValue,
+				credentialConfigurationId: effectiveConfigId
 			};
 			console.log("display claims");
 			console.log(normalizedClaims);
@@ -163,7 +165,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					metadata: {
 						credential: {
 							format: parsedHeaders.typ as any, 
-							vct: parsedPayload.vct || parsedPayload.vc?.type?.[0] || "",
+							vct: parsedPayload.vct || effectiveConfigId,
 							TypeMetadata: { claims: [] },
 							image: { dataUri },
 							name: credentialFriendlyName,
