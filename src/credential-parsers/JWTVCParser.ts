@@ -86,67 +86,76 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				preferredLangs: string[] = ['en-US']
 			): Promise<string | null> => {
 			
-				// 1. Match the localized display from issuer metadata
+				// 1. Resolve Metadata & Display
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
-				
-				// Cast to 'any' to bypass the "Property 'rendering' does not exist" error
 				const displayMetadata = credentialDisplayLocalized as any;
 				
 				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
 				const simpleDisplayConfig = displayMetadata?.rendering?.simple || null;
-				console.log("svg Template URI");
-				console.log(svgTemplateUri);
-				// STEP 1: SVG Template Rendering (High Priority)
+			
+				// 2. Prepare Flattened Claims for the Renderer
+				const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || parsedPayload) as any;
+				
+				// Ensure we have a valid Image URI (with prefix if it's raw Base64)
+				let rawPicture = parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null;
+				if (rawPicture && typeof rawPicture === 'string' && !rawPicture.startsWith('data:') && !rawPicture.startsWith('http')) {
+					rawPicture = `data:image/jpeg;base64,${rawPicture}`;
+				}
+			
+				const normalizedClaims2 = {
+					...parsedPayload,
+					...credentialSubject,
+					picture: rawPicture
+				};
+			
+				// STEP 1: SVG Template Rendering (Try fetching remote template)
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
 					if (svgResponse && svgResponse.status === 200) {
 						const svgdata = svgResponse.data as string;
-						
-						// For vc+jwt, the SVG often expects the internal credentialSubject claims
-						const renderContext = parsedPayload.vc?.credentialSubject || parsedPayload;
-			
 						const rendered = await cr.renderSvgTemplate({
-							json: renderContext,
+							json: normalizedClaims2, // Use flattened claims
 							credentialImageSvgTemplate: svgdata,
 							sdJwtVcMetadataClaims: undefined,
 							filter,
 						}).catch(() => null);
-						console.log("rendered here Svg Template Uri 1");						
+						
 						if (rendered) return rendered;
 					}
 				}
 			
-				// STEP 2: Custom SVG Rendering (Fallback 1)
+				// STEP 2: Custom SVG Rendering (Use Issuer's Simple Display)
 				if (credentialDisplayLocalized) {
 					const rendered = await renderer.renderCustomSvgTemplate({
-						// Pass the full payload here as the renderer usually handles its own mapping
-						signedClaims: parsedPayload,
+						signedClaims: normalizedClaims2,
 						displayConfig: { 
 							...credentialDisplayLocalized, 
-							...(simpleDisplayConfig ?? {}) 
+							...(simpleDisplayConfig ?? {}),
+							// Inject picture as background if it's missing from the template mapping
+							background_image: normalizedClaims2.picture ? { uri: normalizedClaims2.picture } : undefined
 						},
 					}).catch(() => null);
-					console.log("rendered here credential Display Localized");					
+					
 					if (rendered) return rendered;
 				}
-				const normalizedClaims2 = {
-					...parsedPayload,     // Keep top-level JWT claims (iss, sub, iat, exp)
-					...credentialSubject, // This pulls every field from credentialSubject up to the root
-					picture: pictureValue // Ensures the UI 'picture' key is populated
-				};
-				// STEP 3: Generic Card (Fallback 2)
-				// Define a default PID look in case metadata is missing
+			
+				// STEP 3: Generic PID Fallback (The "Safe" UI)
 				const pidDefaultDisplay = {
 					name: "Person Identification Data",
-					logo: { uri: "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_logo.png" }, // Optional: link to a standard logo
+					logo: { uri: "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_logo.png" },
 					background_color: "#003399", // EU Blue
 					text_color: "#FFFFFF",
 				};
-
+			
 				const finalFallback = await renderer.renderCustomSvgTemplate({
-					signedClaims: normalizedClaims2, // Your flattened claims
-					displayConfig: (credentialDisplayLocalized as any) || pidDefaultDisplay,
+					signedClaims: normalizedClaims2,
+					displayConfig: {
+						...pidDefaultDisplay,
+						// Ensure the portrait is actually placed on the fallback card
+						background_image: normalizedClaims2.picture ? { uri: normalizedClaims2.picture } : undefined
+					},
 				}).catch(() => null);
+			
 				return finalFallback;
 			};
 
