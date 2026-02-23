@@ -130,10 +130,14 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					...parsedPayload,
 					...credentialSubject,
 					picture: rawPicture,
+					birth_family_name: "Doe",
+					birth_given_name: "John",
+					birthdate: "1990-10-15",
 					family_name: "Doe", // Hardcoded as requested
 					given_name: "John"  // Hardcoded as requested
 				};
-
+				console.log("normalized Claims 2");
+				console.log(normalizedClaims2);
 				// STEP 1: SVG Template Rendering
 				let rend =  null;
 				// STEP 1: SVG Template Rendering
