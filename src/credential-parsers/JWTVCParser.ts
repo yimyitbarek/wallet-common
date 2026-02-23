@@ -13,6 +13,8 @@ import { getIssuerMetadata } from "../utils/getIssuerMetadata";
 import { matchDisplayByLocale } from '../utils/matchLocalizedDisplay';
 import { OpenID4VCICredentialRendering } from "../functions/openID4VCICredentialRendering";
 import { z } from 'zod';
+import { JwtVcPayloadSchema } from "../schemas";
+
 
 export function JWTVCParser(args: { context: Context, httpClient: HttpClient }): CredentialParser {
   
@@ -65,6 +67,17 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			}
 			console.log("parsedPayload issuer");
 			console.log(parsedPayload.iss);
+
+			// sd-jwt vc Payload Schema Validation
+			let validatedParsedClaims;
+			try {
+				validatedParsedClaims = JwtVcPayloadSchema.parse(parsedClaims);
+			} catch (err) {
+				return {
+					success: false,
+					error: CredentialParsingError.InvalidSdJwtVcPayload,
+				};
+			}
 
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
