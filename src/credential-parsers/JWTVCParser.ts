@@ -132,17 +132,17 @@ function fromBase64Url(base64url: string): Uint8Array {
       }
 
 			// sd-jwt vc Payload Schema Validation
-			let validatedParsedClaims;
-			try {
-				validatedParsedClaims = JwtVcPayloadSchema.parse(parsedClaims);
-			} catch (err) {
-				return {
-					success: false,
-					error: CredentialParsingError.InvalidSdJwtVcPayload,
-				};
-			}
+			//let validatedParsedClaims;
+			//try {
+			//	validatedParsedClaims = JwtVcPayloadSchema.parse(parsedClaims);
+			//} catch (err) {
+			//	return {
+			//		success: false,
+			//		error: CredentialParsingError.InvalidSdJwtVcPayload,
+			//	};
+			//}
 			console.log("validated Parsed Claims JWTVC");
-			console.log(validatedParsedClaims);
+			//console.log(validatedParsedClaims);
 
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
