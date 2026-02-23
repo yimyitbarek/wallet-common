@@ -82,6 +82,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			const englishDisplay = pidConfig?.display?.find((d: any) => d.locale === 'en') 
 														|| pidConfig?.display?.[0];
 
+			console.log("English display");
+			console.log(englishDisplay);
 			// 3. OVERRIDE: Set the metadata variable used by the callbacks below
 			// This ensures matchDisplayByLocale finds the 'PID' specific branding
 			const credentialIssuerMetadata = pidConfig;
@@ -90,6 +92,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			const credentialFriendlyName: CredentialFriendlyNameCallback = async (preferredLangs = ['en']) => {
 				// Now this will correctly find the name from the PID config we set above
 				const display = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
+				console.log("display");
+				console.log(display);
 				return display?.name || 'Personal ID';
 			};
 
@@ -104,6 +108,15 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				
 				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
 				
+				console.log("Credential Display Localized");
+				console.log(credentialDisplayLocalized);
+
+				console.log("displayedMetadata");
+				console.log(displayMetadata);
+				
+				console.log("svgTemplateUri");
+				console.log(svgTemplateUri);
+
 				// 2. Prepare Flattened Claims (Flattening logic you requested)
 				const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || parsedPayload) as any;
 				
