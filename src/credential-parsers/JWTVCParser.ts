@@ -147,7 +147,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 							sdJwtVcMetadataClaims: undefined,
 							filter,
 						}).catch(() => null);
-						
+						console.log("is rendered");
+						console.log(rendered);	
 						if (rendered) return rendered;
 					}
 				}
@@ -160,16 +161,16 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					text_color: displayMetadata?.text_color || "#FFFFFF",
 				};
 
-				const finalFallback = await renderer.renderCustomSvgTemplate({
-					signedClaims: normalizedClaims2,
-					displayConfig: {
-						...pidDefaultDisplay,
-						// Ensure the portrait is mapped to the background image for the SVG
-						background_image: normalizedClaims2.picture ? { uri: normalizedClaims2.picture } : undefined
-					},
-				}).catch(() => null);
+				//const finalFallback = await renderer.renderCustomSvgTemplate({
+				//	signedClaims: normalizedClaims2,
+				//	displayConfig: {
+				//		...pidDefaultDisplay,
+				////		// Ensure the portrait is mapped to the background image for the SVG
+				//		background_image: normalizedClaims2.picture ? { uri: normalizedClaims2.picture } : undefined
+				//	},
+				//}).catch(() => null);
 
-				return finalFallback;
+				//return finalFallback;
 			};
 
 			// 1. Identify the source of the nested claims
