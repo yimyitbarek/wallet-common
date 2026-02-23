@@ -173,6 +173,9 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 				console.log(svgTemplateUri);
 				console.log("simple Display Config");
 				console.log(simpleDisplayConfig);
+
+				console.log("Validated Parsed Claims");
+				console.log(validatedParsedClaims);
 				// 1. Try SVG template rendering
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
