@@ -135,6 +135,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				};
 
 				// STEP 1: SVG Template Rendering
+				let rend =  null;
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
 					console.log("svg Response");
@@ -148,7 +149,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 							filter,
 						}).catch(() => null);
 						console.log("is rendered");
-						console.log(rendered);	
+						console.log(rendered);
+						rend = rendered;	
 						if (rendered) return rendered;
 					}
 				}
@@ -170,7 +172,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				//	},
 				//}).catch(() => null);
 
-				//return finalFallback;
+				return rend;
 			};
 
 			// 1. Identify the source of the nested claims
