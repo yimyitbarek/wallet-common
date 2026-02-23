@@ -130,16 +130,19 @@ function fromBase64Url(base64url: string): Uint8Array {
           error: CredentialParsingError.CouldNotParse,
         };
       }
-
+			console.log("parsed Claims JWTVC");
+			console.log(parsedClaims);
 			// sd-jwt vc Payload Schema Validation
-			//let validatedParsedClaims;
-			//try {
-			//	validatedParsedClaims = JwtVcPayloadSchema.parse(parsedClaims);
-			//} catch (err) {
+			let validatedParsedClaims;
+			try {
+				validatedParsedClaims = JwtVcPayloadSchema.parse(parsedClaims);
+			} catch (err) {
 			//	return {
 			//		success: false,
 			//		error: CredentialParsingError.InvalidSdJwtVcPayload,
-			//	};
+				console.log("validated Parsed Claims error");
+				console.log(err);	
+			};
 			//}
 			console.log("validated Parsed Claims JWTVC");
 			//console.log(validatedParsedClaims);
