@@ -77,7 +77,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 
 			// 1. Access the specific "PID" config from the issuer metadata
 			const pidConfig = issuerMetadata?.credential_configurations_supported?.['PID'];
-
+			console.log("Pid config");
+			console.log(pidConfig);
 			// 2. Extract the English display specifically for our internal use
 			const englishDisplay = pidConfig?.display?.find((d: any) => d.locale === 'en') 
 														|| pidConfig?.display?.[0];
