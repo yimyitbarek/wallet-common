@@ -92,7 +92,9 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				
 				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
 				const simpleDisplayConfig = displayMetadata?.rendering?.simple || null;
-			
+				
+				console.log("display meta data");
+				console.log(displayMetadata);
 				// 2. Prepare Flattened Claims for the Renderer
 				const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || parsedPayload) as any;
 				
@@ -124,20 +126,6 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					}
 				}
 			
-				// STEP 2: Custom SVG Rendering (Use Issuer's Simple Display)
-				if (credentialDisplayLocalized) {
-					const rendered = await renderer.renderCustomSvgTemplate({
-						signedClaims: normalizedClaims2,
-						displayConfig: { 
-							...credentialDisplayLocalized, 
-							...(simpleDisplayConfig ?? {}),
-							// Inject picture as background if it's missing from the template mapping
-							background_image: normalizedClaims2.picture ? { uri: normalizedClaims2.picture } : undefined
-						},
-					}).catch(() => null);
-					
-					if (rendered) return rendered;
-				}
 			
 				// STEP 3: Generic PID Fallback (The "Safe" UI)
 				const pidDefaultDisplay = {
