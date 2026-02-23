@@ -78,6 +78,9 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			console.log("credential issuer metadata");
 			console.log(credentialIssuerMetadata);
 
+			console.log("credential issuer");
+			console.log(credentialIssuer);
+
       // 4. Setup Display Callbacks
       const credentialFriendlyName: CredentialFriendlyNameCallback = async (preferredLangs = ['en-US']) => {
         const display = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
