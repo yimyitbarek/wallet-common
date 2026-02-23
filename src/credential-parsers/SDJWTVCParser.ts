@@ -169,7 +169,10 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 
 				const svgTemplateUri = credentialDisplayLocalized?.rendering?.svg_templates?.[0]?.uri || null;
 				const simpleDisplayConfig = credentialDisplayLocalized?.rendering?.simple || null;
-
+				console.log("svg Template URi");
+				console.log(svgTemplateUri);
+				console.log("simple Display Config");
+				console.log(simpleDisplayConfig);
 				// 1. Try SVG template rendering
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
