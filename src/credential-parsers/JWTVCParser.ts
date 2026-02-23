@@ -87,7 +87,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			console.log(englishDisplay);
 			// 3. OVERRIDE: Set the metadata variable used by the callbacks below
 			// This ensures matchDisplayByLocale finds the 'PID' specific branding
-			const credentialIssuerMetadata = pidConfig;
+			const credentialIssuerMetadata = issuerMetadata;
 
 			// 4. Setup Display Callbacks
 			const credentialFriendlyName: CredentialFriendlyNameCallback = async (preferredLangs = ['en']) => {
