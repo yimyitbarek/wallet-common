@@ -129,12 +129,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				const normalizedClaims2 = {
 					...parsedPayload,
 					...credentialSubject,
-					picture: rawPicture,
-					birth_family_name: "Doe",
-					birth_given_name: "John",
-					birthdate: "1990-10-15",
-					family_name: "Doe", // Hardcoded as requested
-					given_name: "John"  // Hardcoded as requested
+					picture: rawPicture
 				};
 				const manualClaimsMetadata = [
 					{ path: ['family_name'], svg_id: 'family_name' },
