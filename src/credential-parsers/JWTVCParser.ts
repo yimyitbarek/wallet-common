@@ -136,24 +136,23 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 
 				// STEP 1: SVG Template Rendering
 				let rend =  null;
+				// STEP 1: SVG Template Rendering
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
-					console.log("svg Response");
-					console.log(svgResponse);
 					if (svgResponse && svgResponse.status === 200) {
 						const svgdata = svgResponse.data as string;
+						
 						const rendered = await cr.renderSvgTemplate({
-							json: normalizedClaims2, // The library will handle the object internally
+							json: normalizedClaims2,
 							credentialImageSvgTemplate: svgdata,
-							sdJwtVcMetadataClaims: undefined,
+							// FIX: Changed 'undefined' to '[]' to prevent the .reduce() crash
+							sdJwtVcMetadataClaims: [], 
 							filter,
 						}).catch((err) => {
-							console.error("SVG Rendering failed:", err);
+							console.error("SVG Internal Error:", err);
 							return null;
 						});
-						console.log("is rendered");
-						console.log(rendered);
-						rend = rendered;	
+						rend = rendered;
 						if (rendered) return rendered;
 					}
 				}
