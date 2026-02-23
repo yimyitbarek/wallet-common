@@ -15,6 +15,8 @@ export async function getIssuerMetadata(
 	const url = `${issuer}/.well-known/openid-credential-issuer`;
 
 	let issuerResponse = null;
+	console.log("Url of the issuer metadata");
+	console.log(url);
 
 	try {
 		issuerResponse = await httpClient.get(url, {}, { useCache });
