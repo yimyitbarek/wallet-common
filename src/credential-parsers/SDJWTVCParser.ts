@@ -176,6 +176,9 @@ export function SDJWTVCParser(args: { context: Context, httpClient: HttpClient }
 
 				console.log("Validated Parsed Claims");
 				console.log(validatedParsedClaims);
+				
+				console.log("credential Meta data");
+				console.log(credentialMetadata);
 				// 1. Try SVG template rendering
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
