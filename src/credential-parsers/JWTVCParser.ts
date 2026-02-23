@@ -107,7 +107,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
 				const displayMetadata = (credentialDisplayLocalized || englishDisplay) as any;
 				
-				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
+				const svgTemplateUri = "https://issuer.yitbarek-dev.app.siros.org/images/template-pid.svg";//displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
 				
 				console.log("Credential Display Localized");
 				console.log(credentialDisplayLocalized);
