@@ -69,63 +69,64 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
       
-      const credentialIssuerMetadata = credentialIssuer?.credentialConfigurationId
-        ? issuerMetadata?.credential_configurations_supported?.[credentialIssuer?.credentialConfigurationId]
-        : undefined;
+      //const credentialIssuerMetadata = credentialIssuer?.credentialConfigurationId
+      //  ? issuerMetadata?.credential_configurations_supported?.[credentialIssuer?.credentialConfigurationId]
+      //  : undefined;
 			console.log("issuer Metadata");
 			console.log(issuerMetadata);
-			
-			console.log("credential issuer metadata");
-			console.log(credentialIssuerMetadata);
 
-			console.log("credential issuer");
-			console.log(credentialIssuer);
+			// 1. Access the specific "PID" config from the issuer metadata
+			const pidConfig = issuerMetadata?.credential_configurations_supported?.['PID'];
 
-      // 4. Setup Display Callbacks
-      const credentialFriendlyName: CredentialFriendlyNameCallback = async (preferredLangs = ['en-US']) => {
-        const display = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
-        return display?.name || 'Verifiable Credential';
-      };
+			// 2. Extract the English display specifically for our internal use
+			const englishDisplay = pidConfig?.display?.find((d: any) => d.locale === 'en') 
+														|| pidConfig?.display?.[0];
+
+			// 3. OVERRIDE: Set the metadata variable used by the callbacks below
+			// This ensures matchDisplayByLocale finds the 'PID' specific branding
+			const credentialIssuerMetadata = pidConfig;
+
+			// 4. Setup Display Callbacks
+			const credentialFriendlyName: CredentialFriendlyNameCallback = async (preferredLangs = ['en']) => {
+				// Now this will correctly find the name from the PID config we set above
+				const display = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
+				return display?.name || 'Personal ID';
+			};
 
 			const dataUri: ImageDataUriCallback = async (
 				filter?: Array<CredentialClaimPath>,
-				preferredLangs: string[] = ['en-US']
+				preferredLangs: string[] = ['en']
 			): Promise<string | null> => {
-			
-				console.log("display credentialIssuerMetadata");
-				console.log(credentialIssuerMetadata);
+
 				// 1. Resolve Metadata & Display
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
-				const displayMetadata = credentialDisplayLocalized as any;
-				console.log("display credentialDisplayLocalized");
-				console.log(credentialDisplayLocalized);
-				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
-				const simpleDisplayConfig = displayMetadata?.rendering?.simple || null;
+				const displayMetadata = (credentialDisplayLocalized || englishDisplay) as any;
 				
-				console.log("display meta data");
-				console.log(displayMetadata);
-				// 2. Prepare Flattened Claims for the Renderer
+				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
+				
+				// 2. Prepare Flattened Claims (Flattening logic you requested)
 				const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || parsedPayload) as any;
 				
-				// Ensure we have a valid Image URI (with prefix if it's raw Base64)
 				let rawPicture = parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null;
 				if (rawPicture && typeof rawPicture === 'string' && !rawPicture.startsWith('data:') && !rawPicture.startsWith('http')) {
 					rawPicture = `data:image/jpeg;base64,${rawPicture}`;
 				}
-			
+
 				const normalizedClaims2 = {
 					...parsedPayload,
 					...credentialSubject,
-					picture: rawPicture
+					picture: rawPicture,
+					family_name: "Doe", // Hardcoded as requested
+					given_name: "John"  // Hardcoded as requested
 				};
-			
-				// STEP 1: SVG Template Rendering (Try fetching remote template)
+
+				// STEP 1: SVG Template Rendering
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
 					if (svgResponse && svgResponse.status === 200) {
 						const svgdata = svgResponse.data as string;
 						const rendered = await cr.renderSvgTemplate({
-							json: normalizedClaims2, // Use flattened claims
+							json: normalizedClaims2,
 							credentialImageSvgTemplate: svgdata,
 							sdJwtVcMetadataClaims: undefined,
 							filter,
@@ -134,25 +135,24 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 						if (rendered) return rendered;
 					}
 				}
-			
-			
-				// STEP 3: Generic PID Fallback (The "Safe" UI)
+
+				// STEP 3: Generic PID Fallback (Using your English metadata)
 				const pidDefaultDisplay = {
-					name: "Person Identification Data",
-					logo: { uri: "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_logo.png" },
-					background_color: "#003399", // EU Blue
-					text_color: "#FFFFFF",
+					name: displayMetadata?.name || "Person Identification Data",
+					logo: displayMetadata?.logo || { uri: "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_logo.png" },
+					background_color: displayMetadata?.background_color || "#003399", 
+					text_color: displayMetadata?.text_color || "#FFFFFF",
 				};
-			
+
 				const finalFallback = await renderer.renderCustomSvgTemplate({
 					signedClaims: normalizedClaims2,
 					displayConfig: {
 						...pidDefaultDisplay,
-						// Ensure the portrait is actually placed on the fallback card
+						// Ensure the portrait is mapped to the background image for the SVG
 						background_image: normalizedClaims2.picture ? { uri: normalizedClaims2.picture } : undefined
 					},
 				}).catch(() => null);
-			
+
 				return finalFallback;
 			};
 
