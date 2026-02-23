@@ -143,11 +143,14 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					if (svgResponse && svgResponse.status === 200) {
 						const svgdata = svgResponse.data as string;
 						const rendered = await cr.renderSvgTemplate({
-							json: normalizedClaims2,
+							json: normalizedClaims2, // The library will handle the object internally
 							credentialImageSvgTemplate: svgdata,
 							sdJwtVcMetadataClaims: undefined,
 							filter,
-						}).catch(() => null);
+						}).catch((err) => {
+							console.error("SVG Rendering failed:", err);
+							return null;
+						});
 						console.log("is rendered");
 						console.log(rendered);
 						rend = rendered;	
