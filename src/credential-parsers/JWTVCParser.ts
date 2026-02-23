@@ -86,10 +86,13 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				preferredLangs: string[] = ['en-US']
 			): Promise<string | null> => {
 			
+				console.log("display credentialIssuerMetadata");
+				console.log(credentialIssuerMetadata);
 				// 1. Resolve Metadata & Display
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
 				const displayMetadata = credentialDisplayLocalized as any;
-				
+				console.log("display credentialDisplayLocalized");
+				console.log(credentialDisplayLocalized);
 				const svgTemplateUri = displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
 				const simpleDisplayConfig = displayMetadata?.rendering?.simple || null;
 				
