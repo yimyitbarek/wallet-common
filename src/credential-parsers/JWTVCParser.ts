@@ -137,6 +137,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 				// STEP 1: SVG Template Rendering
 				if (svgTemplateUri) {
 					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
+					console.log("svg Response");
+					console.log(svgResponse);
 					if (svgResponse && svgResponse.status === 200) {
 						const svgdata = svgResponse.data as string;
 						const rendered = await cr.renderSvgTemplate({
