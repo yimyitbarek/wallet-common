@@ -136,6 +136,13 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					family_name: "Doe", // Hardcoded as requested
 					given_name: "John"  // Hardcoded as requested
 				};
+				const manualClaimsMetadata = [
+					{ path: ['family_name'], svg_id: 'family_name' },
+					{ path: ['given_name'], svg_id: 'given_name' },
+					{ path: ['picture'], svg_id: 'picture' },
+					{ path: ['birth_date'], svg_id: 'birth_date' },
+					{ path: ['expiry_date'], svg_id: 'expiry_date' }
+				];
 				console.log("normalized Claims 2");
 				console.log(normalizedClaims2);
 				// STEP 1: SVG Template Rendering
@@ -150,7 +157,7 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 							json: normalizedClaims2,
 							credentialImageSvgTemplate: svgdata,
 							// FIX: Changed 'undefined' to '[]' to prevent the .reduce() crash
-							sdJwtVcMetadataClaims: [], 
+							sdJwtVcMetadataClaims: manualClaimsMetadata, 
 							filter,
 						}).catch((err) => {
 							console.error("SVG Internal Error:", err);
