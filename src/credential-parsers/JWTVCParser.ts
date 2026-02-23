@@ -26,6 +26,32 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
     return obj;
   }
 
+	/**
+ * Decodes a Base64URL string into a Uint8Array.
+ * JWT parts (header, payload) are encoded in this format.
+ */
+function fromBase64Url(base64url: string): Uint8Array {
+  // 1. Convert Base64URL to standard Base64
+  // Replace '-' with '+' and '_' with '/'
+  let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+  
+  // 2. Add back padding if necessary
+  const pad = base64.length % 4;
+  if (pad === 2) {
+    base64 += '==';
+  } else if (pad === 3) {
+    base64 += '=';
+  }
+
+  // 3. Decode Base64 string to binary
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  return bytes;
+}
   const cr = CredentialRenderingService();
   const renderer = OpenID4VCICredentialRendering({ httpClient: args.httpClient });
 
@@ -68,6 +94,43 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 			console.log("parsedPayload issuer");
 			console.log(parsedPayload.iss);
 
+			const { parsedClaims, parsedHeaders2, parsedPayload2, err } = await (async () => {
+        try {
+          // Standard JWTs are dot-separated (Header.Payload.Signature)
+          const parts = rawCredential.split('.');
+          if (parts.length !== 3) {
+            throw new Error("Invalid JWT format");
+          }
+
+          // Decode Header and Payload using your utility (e.g., fromBase64Url)
+          const headers = JSON.parse(new TextDecoder().decode(fromBase64Url(parts[0])));
+          const payload = JSON.parse(new TextDecoder().decode(fromBase64Url(parts[1])));
+
+          /**
+           * In W3C JWTVC, the 'claims' are typically found inside vc.credentialSubject.
+           * We set parsedClaims to the payload itself so your flattening logic 
+           * can run on it later.
+           */
+          return { 
+            parsedClaims: payload as Record<string, unknown>, 
+            parsedHeaders2: headers, 
+            parsedPayload2: payload, 
+            err: null 
+          };
+        }
+        catch (error) {
+          console.error("JWTVC Decoding failed:", error);
+          return { parsedClaims: null, parsedHeaders: null, parsedPayload: null, err: error };
+        }
+      })();
+
+      if (err || !parsedPayload || !parsedHeaders) {
+        return {
+          success: false,
+          error: CredentialParsingError.CouldNotParse,
+        };
+      }
+
 			// sd-jwt vc Payload Schema Validation
 			let validatedParsedClaims;
 			try {
@@ -78,6 +141,8 @@ export function JWTVCParser(args: { context: Context, httpClient: HttpClient }):
 					error: CredentialParsingError.InvalidSdJwtVcPayload,
 				};
 			}
+			console.log("validated Parsed Claims JWTVC");
+			console.log(validatedParsedClaims);
 
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
