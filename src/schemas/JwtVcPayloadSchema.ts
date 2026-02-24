@@ -22,4 +22,4 @@ export const JwtVcPayloadSchema = z
   })
   .passthrough(); 
 
-export type W3Cv2Payload = z.infer<typeof W3Cv2PayloadSchema>;
+export type JwtVcPayload = z.infer<typeof JwtVcPayloadSchema>;
