@@ -274,13 +274,28 @@ function fromBase64Url(base64url: string): Uint8Array {
 			let base64Bg = "";
 			try {
 				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
-				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' }) as any;
-				const base64Content = Buffer.from(bgResponse.data).toString('base64');
-				base64Bg = `data:image/png;base64,${base64Content}`;
+				
+				// 1. Fetch with arraybuffer response type
+				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' });
+				
+				// 2. Fix TS2769: Cast 'unknown' to 'ArrayBuffer'
+				const dataBuffer = bgResponse.data as ArrayBuffer;
+			
+				if (dataBuffer) {
+					// 3. Convert ArrayBuffer to Base64 (Browser-safe)
+					const bytes = new Uint8Array(dataBuffer);
+					let binary = '';
+					for (let i = 0; i < bytes.byteLength; i++) {
+						binary += String.fromCharCode(bytes[i]);
+					}
+					const base64Content = btoa(binary);
+					
+					base64Bg = `data:image/png;base64,${base64Content}`;
+					console.log("Background image successfully converted to Base64");
+				}
 			} catch (e) {
-				console.error("Could not base64 encode background image", e);
+				console.error("Could not base64 encode background image:", e);
 			}
-
 			// 2. Use the Base64 string in the SVG Template
 			const dynamicSvg = `
 			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
