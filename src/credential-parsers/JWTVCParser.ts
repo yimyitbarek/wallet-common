@@ -173,16 +173,16 @@ function fromBase64Url(base64url: string): Uint8Array {
 
 			// 2. Fetch the metadata from the website
 			const issuerResponse = await args.httpClient.get(ISSUER_URL);
-			const issuerMetadata2 = issuerResponse.data;
+			const issuerMetadata2 = issuerResponse.data as any;
 			
 			/** * 3. Find the specific configuration for 'jwt_vc_json'.
 			 * The issuer supports multiple formats (PID and PID_SD). 
 			 * We filter for the one matching your requirement.
 			 */
-			const configurations = issuerMetadata.credential_configurations_supported || {};
+			const configurations = issuerMetadata2.credential_configurations_supported || {};
 			const pidConfig2 = Object.values(configurations).find(
 				(config: any) => config.format === 'jwt_vc_json'
-			);
+			) as any;
 			
 			// 4. Extract the display and claim metadata
 			const credentialMetadata = pidConfig2?.credential_metadata || {};
