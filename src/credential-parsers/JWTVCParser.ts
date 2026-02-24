@@ -271,30 +271,27 @@ function fromBase64Url(base64url: string): Uint8Array {
 			const bgImageUrl = displayMetadata?.background_image?.url || displayMetadata?.background_image?.uri;
 
 			// 1. Fetch the image as an ArrayBuffer and convert to Base64
-			let base64Bg = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+			let base64Bg = "";
 			try {
+				// The real URL from your metadata
 				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
-				
-				// 1. Fetch with arraybuffer response type
 				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' });
 				
-				// 2. Fix TS2769: Cast 'unknown' to 'ArrayBuffer'
 				const dataBuffer = bgResponse.data as ArrayBuffer;
-			
 				if (dataBuffer) {
-					// 3. Convert ArrayBuffer to Base64 (Browser-safe)
 					const bytes = new Uint8Array(dataBuffer);
 					let binary = '';
+					// This loop creates the binary string for the browser's btoa function
 					for (let i = 0; i < bytes.byteLength; i++) {
 						binary += String.fromCharCode(bytes[i]);
 					}
-					const base64Content = btoa(binary);
 					
-					base64Bg = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";//`data:image/png;base64,${base64Content}`;
-					console.log("Background image successfully converted to Base64");
+					// This creates the REAL base64 string for the Dutch background
+					base64Bg = `data:image/png;base64,${btoa(binary)}`;
+					console.log("Dutch background image successfully converted.");
 				}
 			} catch (e) {
-				console.error("Could not base64 encode background image:", e);
+				console.error("Failed to fetch real background, check network:", e);
 			}
 			// 2. Use the Base64 string in the SVG Template
 			const dynamicSvg = `
