@@ -271,9 +271,10 @@ function fromBase64Url(base64url: string): Uint8Array {
 			const bgImageUrl = displayMetadata?.background_image?.url || displayMetadata?.background_image?.uri;
 
 			// 1. Fetch the image as an ArrayBuffer and convert to Base64
+			// 1. Initialize as empty
 			let base64Bg = "";
+
 			try {
-				// The real URL from your metadata
 				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
 				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' });
 				
@@ -281,45 +282,41 @@ function fromBase64Url(base64url: string): Uint8Array {
 				if (dataBuffer) {
 					const bytes = new Uint8Array(dataBuffer);
 					let binary = '';
-					// This loop creates the binary string for the browser's btoa function
 					for (let i = 0; i < bytes.byteLength; i++) {
 						binary += String.fromCharCode(bytes[i]);
 					}
-					
-					// This creates the REAL base64 string for the Dutch background
-					base64Bg = `data:image/png;base64,${btoa(binary)}`;
-					console.log("Dutch background image successfully converted.");
+					// Update the variable with the ACTUAL data
+					base64Bg = btoa(binary); 
 				}
 			} catch (e) {
-				console.error("Failed to fetch real background, check network:", e);
+				console.error("Image fetch failed", e);
 			}
-			// 2. Use the Base64 string in the SVG Template
+
+			// 2. ONLY NOW define the SVG string
+			// Note: We move the "data:image/png;base64," prefix into the template for safety
 			const dynamicSvg = `
 			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
 				<rect width="400" height="250" rx="15" fill="#DFF4FF" />
 				
 				${base64Bg ? `
 				<image 
-					href="${base64Bg}" 
+					href="data:image/png;base64,${base64Bg}" 
 					width="400" 
 					height="250" 
 					preserveAspectRatio="xMidYMid slice"
-					style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;"
 				/>` : ''}
-			
+
 				<image href="${displayMetadata?.logo?.url}" x="20" y="20" width="45" height="45" />
 			</svg>
 			`;
 
-			// 3. Render as usual
+			// 3. Render
 			const rendered = await cr.renderSvgTemplate({
 				json: normalizedClaims2,
 				credentialImageSvgTemplate: dynamicSvg,
 				sdJwtVcMetadataClaims: manualClaimsMetadata,
 				filter,
 			});
-
-
 
 			if (rendered) return rendered;
 
