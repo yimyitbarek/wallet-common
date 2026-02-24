@@ -260,21 +260,15 @@ function fromBase64Url(base64url: string): Uint8Array {
 				];
 				// 1. Get the raw claims from the fetched metadata
 			// 1. Get raw claims from the fetched metadata
-			const rawClaims = pidConfig2?.credential_metadata?.claims as any[] || [];
+				// 1. Get all raw claims from the metadata
+				const rawClaims = (pidConfig2?.credential_metadata?.claims as any[]) || [];
 
-			// 2. Define exactly which fields you want (using the source names)
-			const whitelist = ['family_name', 'given_name', 'portrait', 'birth_date', 'expiry_date'];
+				// 2. Map every claim to your format
+				const manualClaimsMetadata = rawClaims.map((claim: any) => {
+					// Get the specific field name (e.g., 'family_name' or 'portrait')
+					const fieldName = claim.path[claim.path.length - 1];
 
-			// 3. Filter and Map in a single pass for efficiency
-			const manualClaimsMetadata = rawClaims
-				.filter((claim: any) => {
-					const fieldName = claim.path[claim.path.length - 1];
-					return whitelist.includes(fieldName);
-				})
-				.map((claim: any) => {
-					const fieldName = claim.path[claim.path.length - 1];
-					
-					// Rename 'portrait' to 'picture' for your SVG/UI logic
+					// Apply the specific rename logic for 'portrait'
 					const finalId = fieldName === 'portrait' ? 'picture' : fieldName;
 
 					return {
@@ -282,7 +276,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 						svg_id: finalId
 					};
 				});
-				console.log("normalized Claims 2");
+								console.log("normalized Claims 2");
 				console.log(normalizedClaims2);
 				// STEP 1: SVG Template Rendering
 				let rend =  null;
