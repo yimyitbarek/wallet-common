@@ -272,7 +272,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 							json: normalizedClaims2,
 							credentialImageSvgTemplate: svgdata,
 							// FIX: Changed 'undefined' to '[]' to prevent the .reduce() crash
-							sdJwtVcMetadataClaims: manualClaimsMetadata, 
+							sdJwtVcMetadataClaims: credentialMetadata, 
 							filter,
 						}).catch((err) => {
 							console.error("SVG Internal Error:", err);
