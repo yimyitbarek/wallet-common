@@ -271,7 +271,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 			const bgImageUrl = displayMetadata?.background_image?.url || displayMetadata?.background_image?.uri;
 
 			// 1. Fetch the image as an ArrayBuffer and convert to Base64
-			let base64Bg = "";
+			let base64Bg = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 			try {
 				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
 				
@@ -290,7 +290,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 					}
 					const base64Content = btoa(binary);
 					
-					base64Bg = `data:image/png;base64,${base64Content}`;
+					base64Bg = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";//`data:image/png;base64,${base64Content}`;
 					console.log("Background image successfully converted to Base64");
 				}
 			} catch (e) {
