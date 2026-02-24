@@ -2,16 +2,24 @@ import { z } from "zod";
 
 export const JwtVcPayloadSchema = z
   .object({
-    iss: z.string().min(1),
+    // Root level W3C v2 fields
+    "@context": z.array(z.string()),
+    iss: z.string(),
     sub: z.string().optional(),
     iat: z.number().optional(),
     exp: z.number().optional(),
-    // vct is MISSING in JWTVC, so we make it optional to stop the error
-    vct: z.string().optional(), 
-    vc: z.object({
-      "@context": z.array(z.string()),
-      type: z.array(z.string()),
-      credentialSubject: z.record(z.any()),
-    }).passthrough(),
+    
+    // In your log, these are at the root
+    issuer: z.union([z.string(), z.record(z.any())]).optional(),
+    type: z.array(z.string()),
+    
+    // This is where your Martin Jørgensen data lives
+    credentialSubject: z.record(z.any()),
+    
+    credentialStatus: z.array(z.record(z.any())).optional(),
+    validFrom: z.string().optional(),
+    validUntil: z.string().optional(),
   })
-  .passthrough();
+  .passthrough(); 
+
+export type W3Cv2Payload = z.infer<typeof W3Cv2PayloadSchema>;
