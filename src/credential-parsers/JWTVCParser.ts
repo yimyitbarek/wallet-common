@@ -227,79 +227,70 @@ function fromBase64Url(base64url: string): Uint8Array {
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
 				const displayMetadata = (credentialDisplayLocalized || englishDisplay) as any;
 				
-				const svgTemplateUri = "https://issuer.yitbarek-dev.app.siros.org/images/template-pid.svg";//displayMetadata?.rendering?.svg_templates?.[0]?.uri || null;
-				
-				console.log("Credential Display Localized");
-				console.log(credentialDisplayLocalized);
+				// 1. Get the Display Metadata (Preferring English 'en')
+				const display = pidConfig2?.credential_metadata?.display?.find(
+					(d: any) => d.locale === 'en'
+				) || pidConfig2?.credential_metadata?.display?.[0];
 
-				console.log("displayedMetadata");
-				console.log(displayMetadata);
-				
-				console.log("svgTemplateUri");
-				console.log(svgTemplateUri);
+				// 2. Prepare the background and logo variables
+				const bgColor = display?.background_color || '#DFF4FF';
+				const textColor = display?.text_color || '#ffffff';
+				const bgImage = display?.background_image?.url || '';
+				const logoUrl = display?.logo?.url || '';
+				const cardTitle = display?.name || 'Identity Document';
 
-				// 2. Prepare Flattened Claims (Flattening logic you requested)
+				// 3. Create a Dynamic SVG Template String
+				// This SVG uses the metadata for its visual properties
+				const dynamicSvgTemplate = `
+				<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+					<rect width="400" height="250" rx="15" fill="${bgColor}" />
+					
+					${bgImage ? `<image href="${bgImage}" width="400" height="250" opacity="0.3" />` : ''}
+					
+					<image href="${logoUrl}" x="20" y="20" width="50" height="50" />
+					
+					<text x="80" y="50" font-family="Arial" font-size="18" font-weight="bold" fill="${textColor}">${cardTitle}</text>
+					
+					<rect id="picture" x="20" y="80" width="100" height="120" fill="#ccc" rx="5" />
+					
+					<text x="140" y="100" font-family="Arial" font-size="12" fill="${textColor}" opacity="0.8">Name</text>
+					<text id="family_name" x="140" y="120" font-family="Arial" font-size="14" fill="${textColor}">Loading...</text>
+					
+					<text x="140" y="150" font-family="Arial" font-size="12" fill="${textColor}" opacity="0.8">Birth Date</text>
+					<text id="birth_date" x="140" y="170" font-family="Arial" font-size="14" fill="${textColor}">Loading...</text>
+				</svg>
+				`;
+
+				// 4. Transform ALL Claims (Mapping 'portrait' -> 'picture')
+				const rawClaims = (pidConfig2?.credential_metadata?.claims as any[]) || [];
+				const manualClaimsMetadata = rawClaims.map((claim: any) => {
+					const fieldName = claim.path[claim.path.length - 1];
+					const finalId = fieldName === 'portrait' ? 'picture' : fieldName;
+					return { path: [finalId], svg_id: finalId };
+				});
+
+				// 5. Build Normalized Claims Object
 				const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || parsedPayload) as any;
-				
 				let rawPicture = parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null;
+
 				if (rawPicture && typeof rawPicture === 'string' && !rawPicture.startsWith('data:') && !rawPicture.startsWith('http')) {
 					rawPicture = `data:image/jpeg;base64,${rawPicture}`;
 				}
 
-				const normalizedClaims2 = {
-					...parsedPayload,
-					...credentialSubject,
-					picture: rawPicture
-				};
-				const manualClaimsMetadata2 = [
-					{ path: ['family_name'], svg_id: 'family_name' },
-					{ path: ['given_name'], svg_id: 'given_name' },
-					{ path: ['picture'], svg_id: 'picture' },
-					{ path: ['birth_date'], svg_id: 'birth_date' },
-					{ path: ['expiry_date'], svg_id: 'expiry_date' }
-				];
-				// 1. Get the raw claims from the fetched metadata
-			// 1. Get raw claims from the fetched metadata
-				// 1. Get all raw claims from the metadata
-				const rawClaims = (pidConfig2?.credential_metadata?.claims as any[]) || [];
+				const normalizedClaims2 = { ...parsedPayload, ...credentialSubject, picture: rawPicture };
 
-				// 2. Map every claim to your format
-				const manualClaimsMetadata = rawClaims.map((claim: any) => {
-					// Get the specific field name (e.g., 'family_name' or 'portrait')
-					const fieldName = claim.path[claim.path.length - 1];
-
-					// Apply the specific rename logic for 'portrait'
-					const finalId = fieldName === 'portrait' ? 'picture' : fieldName;
-
-					return {
-						path: [finalId],
-						svg_id: finalId
-					};
+				// 6. Render the SVG using the generated template
+				const rendered = await cr.renderSvgTemplate({
+					json: normalizedClaims2,
+					credentialImageSvgTemplate: dynamicSvgTemplate, // Use the string we built above
+					sdJwtVcMetadataClaims: manualClaimsMetadata,
+					filter,
+				}).catch((err) => {
+					console.error("SVG Render Error:", err);
+					return null;
 				});
-								console.log("normalized Claims 2");
-				console.log(normalizedClaims2);
-				// STEP 1: SVG Template Rendering
-				let rend =  null;
-				// STEP 1: SVG Template Rendering
-				if (svgTemplateUri) {
-					const svgResponse = await args.httpClient.get(svgTemplateUri, {}, { useCache: true }).catch(() => null);
-					if (svgResponse && svgResponse.status === 200) {
-						const svgdata = svgResponse.data as string;
-						
-						const rendered = await cr.renderSvgTemplate({
-							json: normalizedClaims2,
-							credentialImageSvgTemplate: svgdata,
-							// FIX: Changed 'undefined' to '[]' to prevent the .reduce() crash
-							sdJwtVcMetadataClaims: manualClaimsMetadata, 
-							filter,
-						}).catch((err) => {
-							console.error("SVG Internal Error:", err);
-							return null;
-						});
-						rend = rendered;
-						if (rendered) return rendered;
-					}
-				}
+
+				if (rendered) return rendered;
 
 				// STEP 3: Generic PID Fallback (Using your English metadata)
 				const pidDefaultDisplay = {
