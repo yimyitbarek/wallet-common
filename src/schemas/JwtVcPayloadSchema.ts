@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const JWTVCPayloadSchema = z
+export const JwtVcPayloadSchema = z
   .object({
     iss: z.string().min(1),
     sub: z.string().optional(),
