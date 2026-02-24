@@ -237,7 +237,8 @@ function fromBase64Url(base64url: string): Uint8Array {
 				const displayMetadata = pidConfig2?.credential_metadata?.display?.find((d: any) => d.locale === 'en') 
 					|| pidConfig2?.credential_metadata?.display?.find((d: any) => d.locale === 'nl')
 					|| pidConfig2?.credential_metadata?.display?.[0];
-
+				console.log("display Metadata from url");
+				console.log(displayMetadata);
 				// 2. Prepare visual variables from the metadata
 				const bgColor = displayMetadata?.background_color || '#DFF4FF';
 				const textColor = displayMetadata?.text_color || '#ffffff';
