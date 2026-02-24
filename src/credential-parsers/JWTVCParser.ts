@@ -266,12 +266,27 @@ function fromBase64Url(base64url: string): Uint8Array {
 
 			// 4. Create the Dynamic SVG Template using the Metadata colors and images
 			// This replaces the hardcoded svgTemplateUri
+
+						// Ensure we have the URL
+			const bgImageUrl = displayMetadata?.background_image?.url || displayMetadata?.background_image?.uri;
+
 			const dynamicSvg = `
-			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 				<rect width="400" height="250" rx="15" fill="${displayMetadata?.background_color || '#DFF4FF'}" />
 				
-				${displayMetadata?.background_image?.url ? `<image href="https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png" width="400" height="250" opacity="0.3" />` : ''}
-				
+				${bgImageUrl ? `
+				<image 
+					href="${bgImageUrl}" 
+					xlink:href="${bgImageUrl}" 
+					x="0" y="0" 
+					width="400" 
+					height="250" 
+					preserveAspectRatio="xMidYMid slice"
+					opacity="1" 
+				/>` : ''}
+
+				<rect width="400" height="250" rx="15" fill="black" opacity="0.1" />
+
 				<image href="${displayMetadata?.logo?.url}" x="20" y="20" width="45" height="45" />
 				
 				<text x="75" y="48" font-family="Arial" font-size="18" font-weight="bold" fill="${displayMetadata?.text_color || '#ffffff'}">
@@ -280,11 +295,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 				
 				<rect id="picture" x="20" y="80" width="90" height="110" fill="#f0f0f0" rx="5" />
 				
-				<text x="125" y="100" font-family="Arial" font-size="10" fill="${displayMetadata?.text_color || '#ffffff'}" opacity="0.7">Family Name</text>
 				<text id="family_name" x="125" y="120" font-family="Arial" font-size="14" font-weight="bold" fill="${displayMetadata?.text_color || '#ffffff'}">-</text>
-				
-				<text x="125" y="150" font-family="Arial" font-size="10" fill="${displayMetadata?.text_color || '#ffffff'}" opacity="0.7">Birth Date</text>
-				<text id="birth_date" x="125" y="170" font-family="Arial" font-size="14" font-weight="bold" fill="${displayMetadata?.text_color || '#ffffff'}">-</text>
 			</svg>
 			`;
 
