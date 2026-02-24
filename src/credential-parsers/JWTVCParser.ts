@@ -251,13 +251,33 @@ function fromBase64Url(base64url: string): Uint8Array {
 					...credentialSubject,
 					picture: rawPicture
 				};
-				const manualClaimsMetadata = [
+				const manualClaimsMetadata2 = [
 					{ path: ['family_name'], svg_id: 'family_name' },
 					{ path: ['given_name'], svg_id: 'given_name' },
 					{ path: ['picture'], svg_id: 'picture' },
 					{ path: ['birth_date'], svg_id: 'birth_date' },
 					{ path: ['expiry_date'], svg_id: 'expiry_date' }
 				];
+				// 1. Get the raw claims from the fetched metadata
+				const rawClaims = pidConfig?.credential_metadata?.claims || [];
+
+				// 2. Map them to your desired format
+				const manualClaimsMetadata = rawClaims.map((claim: any) => {
+					// Extract the actual field name (the last element in the path array)
+					// Source: ["credentialSubject", "family_name"] -> Target: "family_name"
+					const fieldName = claim.path[claim.path.length - 1];
+
+					return {
+						path: [fieldName],
+						svg_id: fieldName
+					};
+				});
+
+				// 3. Optional: Filter for specific fields if you don't want all 28
+				const whitelist = ['family_name', 'given_name', 'portrait', 'birth_date', 'expiry_date'];
+				const filteredClaimsMetadata = manualClaimsMetadata.filter((c: any) => 
+					whitelist.includes(c.svg_id)
+				);
 				console.log("normalized Claims 2");
 				console.log(normalizedClaims2);
 				// STEP 1: SVG Template Rendering
@@ -272,7 +292,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 							json: normalizedClaims2,
 							credentialImageSvgTemplate: svgdata,
 							// FIX: Changed 'undefined' to '[]' to prevent the .reduce() crash
-							sdJwtVcMetadataClaims: credentialMetadata, 
+							sdJwtVcMetadataClaims: filteredClaimsMetadata, 
 							filter,
 						}).catch((err) => {
 							console.error("SVG Internal Error:", err);
