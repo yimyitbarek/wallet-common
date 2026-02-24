@@ -270,22 +270,30 @@ function fromBase64Url(base64url: string): Uint8Array {
 						// Ensure we have the URL
 			const bgImageUrl = displayMetadata?.background_image?.url || displayMetadata?.background_image?.uri;
 
+			// 1. Fetch the image as an ArrayBuffer and convert to Base64
+			let base64Bg = "";
+			try {
+				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
+				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' }) as any;
+				const base64Content = Buffer.from(bgResponse.data).toString('base64');
+				base64Bg = `data:image/png;base64,${base64Content}`;
+			} catch (e) {
+				console.error("Could not base64 encode background image", e);
+			}
+
+			// 2. Use the Base64 string in the SVG Template
 			const dynamicSvg = `
-			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
 				<rect width="400" height="250" rx="15" fill="${displayMetadata?.background_color || '#DFF4FF'}" />
 				
-				${bgImageUrl ? `
+				${base64Bg ? `
 				<image 
-					href="${bgImageUrl}" 
-					xlink:href="${bgImageUrl}" 
+					href="${base64Bg}" 
 					x="0" y="0" 
 					width="400" 
 					height="250" 
 					preserveAspectRatio="xMidYMid slice"
-					opacity="1" 
 				/>` : ''}
-
-				<rect width="400" height="250" rx="15" fill="black" opacity="0.1" />
 
 				<image href="${displayMetadata?.logo?.url}" x="20" y="20" width="45" height="45" />
 				
@@ -293,22 +301,20 @@ function fromBase64Url(base64url: string): Uint8Array {
 					${displayMetadata?.name || 'Personal ID'}
 				</text>
 				
-				<rect id="picture" x="20" y="80" width="90" height="110" fill="#f0f0f0" rx="5" />
-				
+				<rect id="picture" x="20" y="80" width="90" height="110" fill="white" fill-opacity="0.2" rx="5" />
 				<text id="family_name" x="125" y="120" font-family="Arial" font-size="14" font-weight="bold" fill="${displayMetadata?.text_color || '#ffffff'}">-</text>
 			</svg>
 			`;
 
-			// 5. Render
+			// 3. Render as usual
 			const rendered = await cr.renderSvgTemplate({
 				json: normalizedClaims2,
 				credentialImageSvgTemplate: dynamicSvg,
 				sdJwtVcMetadataClaims: manualClaimsMetadata,
 				filter,
-			}).catch((err) => {
-				console.error("Dynamic SVG Render Error:", err);
-				return null;
 			});
+
+
 
 			if (rendered) return rendered;
 
