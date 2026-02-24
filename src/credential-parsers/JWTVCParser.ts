@@ -152,7 +152,14 @@ function fromBase64Url(base64url: string): Uint8Array {
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
 
-			const getJwtMetadataResult = await getJwtVcMetadata(args.context, args.httpClient, rawCredential, validatedParsedClaims, warnings);
+			const getJwtMetadataResult = await getJwtVcMetadata(
+				args.context,
+				args.httpClient,
+				rawCredential,
+				// Use "as Record<string, unknown>" to satisfy the compiler
+				validatedParsedClaims as Record<string, unknown>,
+				warnings
+			)
 			console.log("get JWT Metadata Result");
 			console.log(getJwtMetadataResult);			
 			if ('error' in getJwtMetadataResult) {
