@@ -309,7 +309,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 				//	},
 				//}).catch(() => null);
 
-				return rend;
+				return rendered;
 			};
 
 			// 1. Identify the source of the nested claims
