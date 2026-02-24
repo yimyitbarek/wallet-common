@@ -14,6 +14,8 @@ import { matchDisplayByLocale } from '../utils/matchLocalizedDisplay';
 import { OpenID4VCICredentialRendering } from "../functions/openID4VCICredentialRendering";
 import { z } from 'zod';
 import { JwtVcPayloadSchema } from "../schemas";
+import { getJwtVcMetadata } from "../utils/getJwtVcMetadata";
+
 
 
 export function JWTVCParser(args: { context: Context, httpClient: HttpClient }): CredentialParser {
@@ -149,6 +151,16 @@ function fromBase64Url(base64url: string): Uint8Array {
 
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
+
+			const getJwtMetadataResult = await getJwtVcMetadata(args.context, args.httpClient, rawCredential, validatedParsedClaims, warnings);
+			console.log("get JWT Metadata Result");
+			console.log(getJwtMetadataResult);			
+			if ('error' in getJwtMetadataResult) {
+							return {
+								success: false,
+								error: getJwtMetadataResult.error,
+							}
+						}
       
       //const credentialIssuerMetadata = credentialIssuer?.credentialConfigurationId
       //  ? issuerMetadata?.credential_configurations_supported?.[credentialIssuer?.credentialConfigurationId]
