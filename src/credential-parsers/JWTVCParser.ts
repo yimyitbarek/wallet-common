@@ -266,10 +266,13 @@ function fromBase64Url(base64url: string): Uint8Array {
 					// Extract the actual field name (the last element in the path array)
 					// Source: ["credentialSubject", "family_name"] -> Target: "family_name"
 					const fieldName = claim.path[claim.path.length - 1];
-
+    
+					// Handle the specific rename: 'portrait' -> 'picture'
+					const isPortrait = fieldName === 'portrait';
+					const finalId = isPortrait ? 'picture' : fieldName;
 					return {
-						path: [fieldName],
-						svg_id: fieldName
+						path: [finalId],
+						svg_id: finalId
 					};
 				});
 
