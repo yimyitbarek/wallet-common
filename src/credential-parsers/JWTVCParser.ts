@@ -273,29 +273,25 @@ function fromBase64Url(base64url: string): Uint8Array {
 			// 1. Fetch the image as an ArrayBuffer and convert to Base64
 			// 1. GET THE DATA (Ensure this is inside your async function)
 			// A placeholder blue-textured background base64
-			const base64Bg = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAADhJREFUGFdjZEAD939/Z2BkYmD4//8/AyMDEwMDEwMDEwMDCyMTAwMDEwMDEwMDEwMDCyMTAwMDEwMAMX0XAtXv968AAAAASUVORK5CYII=";
-			try {
-				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
-				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' });
-				
-				// Cast and check
-				const data = bgResponse.data as any; 
-				const buffer = data instanceof ArrayBuffer ? data : data.buffer;
+			let base64Bg = "";
+			const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
 
-				if (buffer) {
-					const bytes = new Uint8Array(buffer);
-					let binary = '';
-					for (let i = 0; i < bytes.byteLength; i++) {
-						binary += String.fromCharCode(bytes[i]);
-					}
-					// Encode to base64
-					// A placeholder blue-textured background base64
-					const base64Bg = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAADhJREFUGFdjZEAD939/Z2BkYmD4//8/AyMDEwMDEwMDEwMDCyMTAwMDEwMDEwMDEwMDCyMTAwMDEwMAMX0XAtXv968AAAAASUVORK5CYII=";
-					console.log("Success! Base64 length:", base64Bg.length);
-				}
-			} catch (e) {
-				console.error("Fetch failed:", e);
+			async function toBase64(url) {
+				const response = await fetch(url);
+				const blob = await response.blob();
+				return new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onloadend = () => resolve(reader.result);
+					reader.onerror = reject;
+					reader.readAsDataURL(blob);
+				});
 			}
+
+			// Usage
+			toBase64(bgUrl).then(base64Bg => {
+				console.log(base64Bg); 
+			});
+
 
 			// 2. CONSTRUCT THE SVG STRING (Must happen AFTER the try/catch)
 			// I removed the conditional check for now so we can see the URI even if it's broken
