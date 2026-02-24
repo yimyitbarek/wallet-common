@@ -271,46 +271,50 @@ function fromBase64Url(base64url: string): Uint8Array {
 			const bgImageUrl = displayMetadata?.background_image?.url || displayMetadata?.background_image?.uri;
 
 			// 1. Fetch the image as an ArrayBuffer and convert to Base64
-			// 1. Initialize as empty
+			// 1. GET THE DATA (Ensure this is inside your async function)
 			let base64Bg = "";
-
 			try {
 				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
 				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' });
 				
-				const dataBuffer = bgResponse.data as ArrayBuffer;
-				if (dataBuffer) {
-					const bytes = new Uint8Array(dataBuffer);
+				// Cast and check
+				const data = bgResponse.data as any; 
+				const buffer = data instanceof ArrayBuffer ? data : data.buffer;
+
+				if (buffer) {
+					const bytes = new Uint8Array(buffer);
 					let binary = '';
 					for (let i = 0; i < bytes.byteLength; i++) {
 						binary += String.fromCharCode(bytes[i]);
 					}
-					// Update the variable with the ACTUAL data
-					base64Bg = btoa(binary); 
+					// Encode to base64
+					base64Bg = btoa(binary);
+					console.log("Success! Base64 length:", base64Bg.length);
 				}
 			} catch (e) {
-				console.error("Image fetch failed", e);
+				console.error("Fetch failed:", e);
 			}
 
-			// 2. ONLY NOW define the SVG string
-			// Note: We move the "data:image/png;base64," prefix into the template for safety
+			// 2. CONSTRUCT THE SVG STRING (Must happen AFTER the try/catch)
+			// I removed the conditional check for now so we can see the URI even if it's broken
 			const dynamicSvg = `
 			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
 				<rect width="400" height="250" rx="15" fill="#DFF4FF" />
 				
-				${base64Bg ? `
 				<image 
 					href="data:image/png;base64,${base64Bg}" 
 					width="400" 
 					height="250" 
 					preserveAspectRatio="xMidYMid slice"
-				/>` : ''}
+				/>
 
 				<image href="${displayMetadata?.logo?.url}" x="20" y="20" width="45" height="45" />
+				
+				<text x="20" y="100" font-family="Arial" font-size="12" fill="black">Debug Length: ${base64Bg.length}</text>
 			</svg>
 			`;
 
-			// 3. Render
+			// 3. RENDER
 			const rendered = await cr.renderSvgTemplate({
 				json: normalizedClaims2,
 				credentialImageSvgTemplate: dynamicSvg,
