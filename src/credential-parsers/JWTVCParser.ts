@@ -296,36 +296,18 @@ function fromBase64Url(base64url: string): Uint8Array {
 			// 2. Use the Base64 string in the SVG Template
 			const dynamicSvg = `
 			<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
-				<defs>
-					<clipPath id="roundedCorners">
-						<rect width="400" height="250" rx="15" />
-					</clipPath>
-				</defs>
-			
-				<rect width="400" height="250" rx="15" fill="${displayMetadata?.background_color || '#DFF4FF'}" />
+				<rect width="400" height="250" rx="15" fill="#DFF4FF" />
 				
 				${base64Bg ? `
 				<image 
 					href="${base64Bg}" 
-					x="0" y="0" 
 					width="400" 
 					height="250" 
-					clip-path="url(#roundedCorners)"
 					preserveAspectRatio="xMidYMid slice"
+					style="image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges;"
 				/>` : ''}
 			
-				<rect width="400" height="250" rx="15" fill="black" opacity="0.05" clip-path="url(#roundedCorners)" />
-			
-				<image href="${displayMetadata?.logo?.url}" x="20" y="15" width="45" height="45" />
-				
-				<text x="75" y="42" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="${displayMetadata?.text_color || '#ffffff'}">
-					${displayMetadata?.name || 'Personal ID'}
-				</text>
-				
-				<rect id="picture" x="20" y="75" width="95" height="115" fill="white" fill-opacity="0.2" rx="5" stroke="white" stroke-width="0.5" />
-				
-				<text x="130" y="100" font-family="Arial, sans-serif" font-size="10" fill="${displayMetadata?.text_color || '#ffffff'}" opacity="0.8">Family Name</text>
-				<text id="family_name" x="130" y="120" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="${displayMetadata?.text_color || '#ffffff'}">-</text>
+				<image href="${displayMetadata?.logo?.url}" x="20" y="20" width="45" height="45" />
 			</svg>
 			`;
 
