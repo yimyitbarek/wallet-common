@@ -225,68 +225,87 @@ function fromBase64Url(base64url: string): Uint8Array {
 
 				// 1. Resolve Metadata & Display
 				const credentialDisplayLocalized = matchDisplayByLocale(credentialIssuerMetadata?.display, preferredLangs);
-				const displayMetadata = (credentialDisplayLocalized || englishDisplay) as any;
+				//const displayMetadata = (credentialDisplayLocalized || englishDisplay) as any;
 				
 				// 1. Get the Display Metadata (Preferring English 'en')
 				const display = pidConfig2?.credential_metadata?.display?.find(
 					(d: any) => d.locale === 'en'
 				) || pidConfig2?.credential_metadata?.display?.[0];
 
-				// 2. Prepare the background and logo variables
-				const bgColor = display?.background_color || '#DFF4FF';
-				const textColor = display?.text_color || '#ffffff';
-				const bgImage = display?.background_image?.url || '';
-				const logoUrl = display?.logo?.url || '';
-				const cardTitle = display?.name || 'Identity Document';
+				// 1. Extract the correct display object
+				// We try to find 'en', fallback to 'nl', or just take the first one available
+				const displayMetadata = pidConfig2?.credential_metadata?.display?.find((d: any) => d.locale === 'en') 
+					|| pidConfig2?.credential_metadata?.display?.find((d: any) => d.locale === 'nl')
+					|| pidConfig2?.credential_metadata?.display?.[0];
 
-				// 3. Create a Dynamic SVG Template String
-				// This SVG uses the metadata for its visual properties
-				const dynamicSvgTemplate = `
-				<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
-					<rect width="400" height="250" rx="15" fill="${bgColor}" />
-					
-					${bgImage ? `<image href="${bgImage}" width="400" height="250" opacity="0.3" />` : ''}
-					
-					<image href="${logoUrl}" x="20" y="20" width="50" height="50" />
-					
-					<text x="80" y="50" font-family="Arial" font-size="18" font-weight="bold" fill="${textColor}">${cardTitle}</text>
-					
-					<rect id="picture" x="20" y="80" width="100" height="120" fill="#ccc" rx="5" />
-					
-					<text x="140" y="100" font-family="Arial" font-size="12" fill="${textColor}" opacity="0.8">Name</text>
-					<text id="family_name" x="140" y="120" font-family="Arial" font-size="14" fill="${textColor}">Loading...</text>
-					
-					<text x="140" y="150" font-family="Arial" font-size="12" fill="${textColor}" opacity="0.8">Birth Date</text>
-					<text id="birth_date" x="140" y="170" font-family="Arial" font-size="14" fill="${textColor}">Loading...</text>
-				</svg>
-				`;
+				// 2. Prepare visual variables from the metadata
+				const bgColor = displayMetadata?.background_color || '#DFF4FF';
+				const textColor = displayMetadata?.text_color || '#ffffff';
+				const logoUrl = displayMetadata?.logo?.url || '';
+				const bgImageUrl = displayMetadata?.background_image?.url || '';
+				const cardTitle = displayMetadata?.name || 'Personal ID';
 
-				// 4. Transform ALL Claims (Mapping 'portrait' -> 'picture')
+				// 3. Map the 28 claims and fix the 'portrait' -> 'picture' naming
 				const rawClaims = (pidConfig2?.credential_metadata?.claims as any[]) || [];
 				const manualClaimsMetadata = rawClaims.map((claim: any) => {
 					const fieldName = claim.path[claim.path.length - 1];
+					
+					// Align with your normalization logic
 					const finalId = fieldName === 'portrait' ? 'picture' : fieldName;
-					return { path: [finalId], svg_id: finalId };
+
+					return {
+						path: [finalId],
+						svg_id: finalId
+					};
 				});
 
-				// 5. Build Normalized Claims Object
+				// 4. Normalize the data (Flattening logic)
 				const credentialSubject = (parsedPayload.vc?.credentialSubject || parsedPayload.credentialSubject || parsedPayload) as any;
-				let rawPicture = parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null;
 
+				let rawPicture = parsedPayload.picture || credentialSubject.picture || credentialSubject.portrait || null;
 				if (rawPicture && typeof rawPicture === 'string' && !rawPicture.startsWith('data:') && !rawPicture.startsWith('http')) {
 					rawPicture = `data:image/jpeg;base64,${rawPicture}`;
 				}
 
-				const normalizedClaims2 = { ...parsedPayload, ...credentialSubject, picture: rawPicture };
+				const normalizedClaims2 = {
+					...parsedPayload,
+					...credentialSubject,
+					picture: rawPicture,
+					// Inject the visual metadata so the template can access it if needed
+					banner_color: bgColor,
+					text_color: textColor,
+					issuer_logo: logoUrl,
+					card_title: cardTitle
+				};
 
-				// 6. Render the SVG using the generated template
+				// 5. Use a local Dynamic Template instead of an external URI
+				// This template uses the colors and logos directly from your 'displayMetadata'
+				const dynamicSvgTemplate = `
+				<svg width="400" height="250" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+					<rect width="400" height="250" rx="15" fill="${bgColor}" />
+					${bgImageUrl ? `<image href="${bgImageUrl}" width="400" height="250" opacity="0.2"/>` : ''}
+					
+					<image href="${logoUrl}" x="20" y="20" width="40" height="40" />
+					<text x="70" y="45" font-family="Arial" font-size="16" font-weight="bold" fill="${textColor}">${cardTitle}</text>
+					
+					<rect id="picture" x="20" y="80" width="90" height="110" fill="#eee" rx="5" />
+					
+					<text x="125" y="100" font-family="Arial" font-size="10" fill="${textColor}" opacity="0.7">Family Name</text>
+					<text id="family_name" x="125" y="120" font-family="Arial" font-size="14" fill="${textColor}">-</text>
+					
+					<text x="125" y="150" font-family="Arial" font-size="10" fill="${textColor}" opacity="0.7">Given Name</text>
+					<text id="given_name" x="125" y="170" font-family="Arial" font-size="14" fill="${textColor}">-</text>
+				</svg>
+				`;
+
+				// 6. Render
 				const rendered = await cr.renderSvgTemplate({
 					json: normalizedClaims2,
-					credentialImageSvgTemplate: dynamicSvgTemplate, // Use the string we built above
+					credentialImageSvgTemplate: dynamicSvgTemplate,
 					sdJwtVcMetadataClaims: manualClaimsMetadata,
 					filter,
-				}).catch((err) => {
-					console.error("SVG Render Error:", err);
+				}).catch(err => {
+					console.error("Render Error:", err);
 					return null;
 				});
 
