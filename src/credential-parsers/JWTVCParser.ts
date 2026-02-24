@@ -259,7 +259,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 					{ path: ['expiry_date'], svg_id: 'expiry_date' }
 				];
 				// 1. Get the raw claims from the fetched metadata
-				const rawClaims = pidConfig?.credential_metadata?.claims || [];
+				const rawClaims = pidConfig2?.credential_metadata?.claims as any || [];
 
 				// 2. Map them to your desired format
 				const manualClaimsMetadata = rawClaims.map((claim: any) => {
