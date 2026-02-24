@@ -272,7 +272,8 @@ function fromBase64Url(base64url: string): Uint8Array {
 
 			// 1. Fetch the image as an ArrayBuffer and convert to Base64
 			// 1. GET THE DATA (Ensure this is inside your async function)
-			let base64Bg = "";
+			// A placeholder blue-textured background base64
+			const base64Bg = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAADhJREFUGFdjZEAD939/Z2BkYmD4//8/AyMDEwMDEwMDEwMDCyMTAwMDEwMDEwMDEwMDCyMTAwMDEwMAMX0XAtXv968AAAAASUVORK5CYII=";
 			try {
 				const bgUrl = "https://nl.gov.dev.eduwallet.nl/images/nlgov_credential_bg.png";
 				const bgResponse = await args.httpClient.get(bgUrl, { responseType: 'arraybuffer' });
@@ -288,7 +289,8 @@ function fromBase64Url(base64url: string): Uint8Array {
 						binary += String.fromCharCode(bytes[i]);
 					}
 					// Encode to base64
-					base64Bg = btoa(binary);
+					// A placeholder blue-textured background base64
+					const base64Bg = "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAAXNSR0IArs4c6QAAADhJREFUGFdjZEAD939/Z2BkYmD4//8/AyMDEwMDEwMDEwMDCyMTAwMDEwMDEwMDEwMDCyMTAwMDEwMAMX0XAtXv968AAAAASUVORK5CYII=";
 					console.log("Success! Base64 length:", base64Bg.length);
 				}
 			} catch (e) {
