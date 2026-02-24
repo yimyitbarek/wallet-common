@@ -152,14 +152,14 @@ function fromBase64Url(base64url: string): Uint8Array {
       // 3. Fetch Metadata
       const { metadata: issuerMetadata } = await getIssuerMetadata(args.httpClient, "https://agent.dev.eduwallet.nl/nlgov", warnings);
 
+
 			const getJwtMetadataResult = await getJwtVcMetadata(
-				args.context,
-				args.httpClient,
-				rawCredential,
-				// Use "as Record<string, unknown>" to satisfy the compiler
-				validatedParsedClaims as Record<string, unknown>,
+				args.context, 
+				args.httpClient, 
+				rawCredential, 
+				validatedParsedClaims as Record<string, unknown>, 
 				warnings
-			)
+			);
 			console.log("get JWT Metadata Result");
 			console.log(getJwtMetadataResult);			
 			if ('error' in getJwtMetadataResult) {
@@ -169,6 +169,26 @@ function fromBase64Url(base64url: string): Uint8Array {
 							}
 						}
       
+			const ISSUER_URL = 'https://agent.dev.eduwallet.nl/nlgov/.well-known/openid-credential-issuer';
+
+			// 2. Fetch the metadata from the website
+			const issuerResponse = await args.httpClient.get(ISSUER_URL);
+			const issuerMetadata2 = issuerResponse.data;
+			
+			/** * 3. Find the specific configuration for 'jwt_vc_json'.
+			 * The issuer supports multiple formats (PID and PID_SD). 
+			 * We filter for the one matching your requirement.
+			 */
+			const configurations = issuerMetadata.credential_configurations_supported || {};
+			const pidConfig2 = Object.values(configurations).find(
+				(config: any) => config.format === 'jwt_vc_json'
+			);
+			
+			// 4. Extract the display and claim metadata
+			const credentialMetadata = pidConfig2?.credential_metadata || {};
+
+			console.log("Credential Metadata from url");
+			console.log(credentialMetadata);
       //const credentialIssuerMetadata = credentialIssuer?.credentialConfigurationId
       //  ? issuerMetadata?.credential_configurations_supported?.[credentialIssuer?.credentialConfigurationId]
       //  : undefined;
