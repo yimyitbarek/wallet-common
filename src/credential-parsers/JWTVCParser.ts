@@ -259,28 +259,29 @@ function fromBase64Url(base64url: string): Uint8Array {
 					{ path: ['expiry_date'], svg_id: 'expiry_date' }
 				];
 				// 1. Get the raw claims from the fetched metadata
-				const rawClaims = pidConfig2?.credential_metadata?.claims as any || [];
+			// 1. Get raw claims from the fetched metadata
+			const rawClaims = pidConfig2?.credential_metadata?.claims as any[] || [];
 
-				// 2. Map them to your desired format
-				const manualClaimsMetadata = rawClaims.map((claim: any) => {
-					// Extract the actual field name (the last element in the path array)
-					// Source: ["credentialSubject", "family_name"] -> Target: "family_name"
+			// 2. Define exactly which fields you want (using the source names)
+			const whitelist = ['family_name', 'given_name', 'portrait', 'birth_date', 'expiry_date'];
+
+			// 3. Filter and Map in a single pass for efficiency
+			const manualClaimsMetadata = rawClaims
+				.filter((claim: any) => {
 					const fieldName = claim.path[claim.path.length - 1];
-    
-					// Handle the specific rename: 'portrait' -> 'picture'
-					const isPortrait = fieldName === 'portrait';
-					const finalId = isPortrait ? 'picture' : fieldName;
+					return whitelist.includes(fieldName);
+				})
+				.map((claim: any) => {
+					const fieldName = claim.path[claim.path.length - 1];
+					
+					// Rename 'portrait' to 'picture' for your SVG/UI logic
+					const finalId = fieldName === 'portrait' ? 'picture' : fieldName;
+
 					return {
 						path: [finalId],
 						svg_id: finalId
 					};
 				});
-
-				// 3. Optional: Filter for specific fields if you don't want all 28
-				const whitelist = ['family_name', 'given_name', 'portrait', 'birth_date', 'expiry_date'];
-				const filteredClaimsMetadata = manualClaimsMetadata.filter((c: any) => 
-					whitelist.includes(c.svg_id)
-				);
 				console.log("normalized Claims 2");
 				console.log(normalizedClaims2);
 				// STEP 1: SVG Template Rendering
@@ -295,7 +296,7 @@ function fromBase64Url(base64url: string): Uint8Array {
 							json: normalizedClaims2,
 							credentialImageSvgTemplate: svgdata,
 							// FIX: Changed 'undefined' to '[]' to prevent the .reduce() crash
-							sdJwtVcMetadataClaims: filteredClaimsMetadata, 
+							sdJwtVcMetadataClaims: manualClaimsMetadata, 
 							filter,
 						}).catch((err) => {
 							console.error("SVG Internal Error:", err);
